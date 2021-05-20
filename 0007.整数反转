@@ -1,0 +1,81 @@
+# 解题关键点
+
+- 尾数 0 在反转后将被忽略
+- 如果反转结果溢出 int32 的范围，要返回 0
+
+# 代码
+
+直接进行数值计算，思路是对原数不断取余然后除以10，结果不断乘以10然后加上余数
+
+```rust
+use std::convert::TryInto;
+
+impl Solution {
+    pub fn reverse(x: i32) -> i32 {
+        // 标记一下是否是负数
+        let nega = x < 0;
+        // rust 有 i32 运算溢出的坑，所以先转成 isize
+        let mut x: isize = x.try_into().unwrap();
+        if nega {
+            x = -x;
+        }
+        let mut rev = x % 10;
+        x = x / 10;
+        while x != 0 {
+            rev = rev * 10 + x % 10;
+            x = x / 10;
+        }
+        // 判断溢出，这里不用精确判断正负数，因为边界值不是“回文”
+        if rev >= 2isize.pow(31) {
+            return 0;
+        }
+        // 最后加符号，转 i32 并返回
+        if nega {
+            (-rev).try_into().unwrap()
+        } else {
+            rev.try_into().unwrap()
+        }
+    }
+}
+```
+
+另一种思路，先转字符串，反转字符串后再转回数值
+
+```rust
+pub fn reverse(x: i32) -> i32 {
+    let nega = x < 0;
+    // i32 转字符串
+    let x = x.to_string();
+    let start = if nega { 1 } else { 0 };
+    let mut rev = String::from("");
+    // 逆序循环
+    for i in (start..x.len()).rev() {
+        // .push_str() 在末尾拼接字符串
+        rev.push_str(&x.chars().nth(i).unwrap().to_string());
+    }
+    // 字符串转 isize
+    let rev = rev.parse::<isize>().unwrap();
+    // 后面逻辑不变
+    if rev >= 2isize.pow(31) {
+        return 0;
+    }
+    if nega {
+        (-rev).try_into().unwrap()
+    } else {
+        rev.try_into().unwrap()
+    }
+}
+```
+
+# 测试用例
+
+```rust
+assert_eq!(reverse(120), 21);
+assert_eq!(reverse(-120), -21);
+assert_eq!(reverse(123123), 321321);
+assert_eq!(reverse(-123123), -321321);
+assert_eq!(reverse(2147483647), 0);
+assert_eq!(reverse(-2147483648), 0);
+assert_eq!(reverse(2147447412), 2147447412);
+assert_eq!(reverse(-2147447412), -2147447412);
+```
