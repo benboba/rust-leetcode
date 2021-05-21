@@ -1,0 +1,55 @@
+# 解题关键点
+
+- 工作难度和工作收益是相关联的，所以按照工作收益从大到小排列，然后遍历工人找到第一个难度匹配的工作，把收益累加就可以了。
+- [吐槽]怀疑难度是不是标错了，这道题如果要求不能占用额外的空间，可能还需要手写一个排序，如果要求每个工作最多被一个人做，那么还会用到动态规划，现在这样，利用语言自身的排序功能，根本没有难度啊……
+
+# 代码
+
+```rust
+// 这里定义了一个Work结构用于辅助排序
+struct Work {
+    difficulty: i32,
+    profit: i32,
+}
+impl Work {
+    pub fn new(difficulty: i32, profit: i32) -> Self {
+        Work {
+            difficulty,
+            profit,
+        }
+    }
+}
+
+impl Solution {
+    pub fn max_profit_assignment(difficulty: Vec<i32>, profit: Vec<i32>, worker: Vec<i32>) -> i32 {
+        let mut works: Vec<Work> = Vec::new();
+        for i in 0..difficulty.len() {
+            // 首先创建 works 列表
+            works.push(Work::new(difficulty.get(i).unwrap().clone(), profit.get(i).unwrap().clone()));
+        }
+        // 对 works 进行排序
+        // sort_by(|a, b|) 拿到 a 和 b 两个虚拟变量，然后 a.cmp(b) 按照从小到大排列，b.cmp(a) 按照从大到小排列
+        works.sort_by(|a, b| b.profit.cmp(&a.profit));
+        let mut res: i32 = 0;
+        // 遍历工人（因为每个任务可以做多次，所以工人无需排序）
+        for i in worker {
+            // 'tag: 用于作为循环的标签
+            'inner: for j in &works {
+                if j.difficulty <= i {
+                    res += j.profit;
+                    // break 内部循环
+                    break 'inner;
+                }
+            }
+        }
+        res
+    }
+}
+```
+
+# 测试用例
+
+```rust
+assert_eq!(max_profit_assignment(vec![2,4,6,8,10], vec![10,20,30,40,50], vec![4,5,6,7]), 100);
+assert_eq!(max_profit_assignment(vec![2,4,6,8,10], vec![10,20,30,40,50], vec![0]), 0);
+```
